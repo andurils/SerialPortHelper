@@ -108,7 +108,7 @@ namespace SerialPortHelperLib
             }
             set
             {
-                if(_detectComMode != value)
+                if (_detectComMode != value)
                 {
                     _detectComMode = value;
                 }
@@ -151,7 +151,7 @@ namespace SerialPortHelperLib
         public bool Open()
         {
             //判断事件是否为空
-            if(this.EventSerialPortList != null)
+            if (this.EventSerialPortList != null)
             {
                 bool ret = false;
                 //根据检测模式开启检测
@@ -329,7 +329,7 @@ namespace SerialPortHelperLib
 
         private void SetDetectTimerInterval(int interval)
         {
-            if(_timerDetectSerialPortList != null)
+            if (_timerDetectSerialPortList != null)
             {
                 _timerDetectSerialPortList.Interval = interval > 0 ? interval : DETECT_COM_INTERVAL;
             }
@@ -389,15 +389,18 @@ namespace SerialPortHelperLib
                 bakSerialPortList.Clear();
                 foreach (string item in nowSerialPortList)
                 {
-                    int index = StrSerialPortDefaultInfo.ToList().IndexOf(DicSerialPortInfo[item]);
-                    if (DicSerialPortInfo.ContainsKey(item) && (index >= 0))
+                    //端口号是否在列表中
+                    if (bakSerialPortList.Contains(item)) continue;
+                     
+                    if (IsDefaultSerialPort(item))
                     {
-                        bakSerialPortList.Insert(0, item);
+                        //默认端口置顶
+                        bakSerialPortList.Insert(0, item); 
                     }
                     else
-                    {
+                    { 
                         bakSerialPortList.Add(item);
-                    }
+                    } 
                 }
 
                 //触发事件
@@ -406,22 +409,35 @@ namespace SerialPortHelperLib
         }
 
         /// <summary>
+        ///  判断是否默认端口
+        /// </summary>
+        /// <param name="item"></param>
+        private bool IsDefaultSerialPort(string portName)
+        {
+
+            return DicSerialPortInfo.ContainsKey(portName)
+                && (StrSerialPortDefaultInfo.ToList().IndexOf(DicSerialPortInfo[portName]) > 0);
+        }
+
+
+
+        /// <summary>
         /// 获取串口信息
         /// </summary>
         /// <param name="dicData">输出字典</param>
         /// <returns>返回信息数组</returns>
-        private string[] GetSerialPortInfo(Dictionary<string,string> dicData = null)
+        private string[] GetSerialPortInfo(Dictionary<string, string> dicData = null)
         {
             string[] arrInfo = HardwareInfo.GetHardwareInfo(HardwareEnum.Win32_PnPEntity, "Name");
             if (dicData != null)
             {
                 foreach (string item in arrInfo)
                 {
-                    MatchCollection matchCollection =  Regex.Matches(item, @"\(COM\d+\)");
+                    MatchCollection matchCollection = Regex.Matches(item, @"\(COM\d+\)");
                     if (matchCollection.Count > 0)
                     {
                         string strSerialPortName = matchCollection[matchCollection.Count - 1].Value;
-                        string strSerialPortInfo = Regex.Replace(item, Regex.Escape(strSerialPortName) , "").Trim();
+                        string strSerialPortInfo = Regex.Replace(item, Regex.Escape(strSerialPortName), "").Trim();
                         strSerialPortName = Regex.Replace(strSerialPortName, @"[\(\)]", "").Trim();
                         dicData[strSerialPortName] = strSerialPortInfo;
                         Console.WriteLine("Name：" + strSerialPortName + "\tInfo：" + strSerialPortInfo);
